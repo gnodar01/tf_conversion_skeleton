@@ -6,10 +6,11 @@ Playground for creating TF model, converting to tfjs, and displaying in webapp
 Install Jupyter base environment, with kernals in other environments
 
 ```
-conda install notebook
-conda install jupyterlab
+# if you haven't already installed jupyter
 conda install nb_conda_kernels
-# optionally, install extensiosn
+conda install jupyterlab
+conda install notebook
+# optionally, install extensions
 conda install jupyter_contrib_nbextensions
 ```
 
@@ -20,14 +21,16 @@ conda env create -n TF python=3.10 pip ipykernel
 conda activate TF
 ```
 
-Install TensorFlow. For mac follow [instructions here](https://developer.apple.com/metal/tensorflow-plugin/)
+Install TensorFlow. Below are [for macOS only](https://developer.apple.com/metal/tensorflow-plugin/). For other OS, follow [instructions from tensorflow](https://www.tensorflow.org/install/pip#linux).
 
 ```
 # only if using Apple Silicon
 conda install apple tensorflow-deps
 
-# install base TensorFlow
+# on macos, install base TensorFlow
 python -m pip install tensorflow-metal
+
+
 ```
 
 Install tfjs_converter
