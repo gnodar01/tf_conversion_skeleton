@@ -1,0 +1,9 @@
+.main {
+    color: black;
+    /* background: url('./images/icon.png'); */
+}
+
+#plot {
+    width: 600px;
+    height: 250px;
+}
