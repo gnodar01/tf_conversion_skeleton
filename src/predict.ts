@@ -66,12 +66,26 @@ async function miscModel(
 
   debug && console.log("Model: ", model);
 
-  const out = model.execute(X);
-
-  debug && console.log("Output: ", out);
-
   // input [-1, 224, 224, 3]
   // output dense, [-1, 3]
+  const yHat = model.execute(X) as tf.Tensor2D;
+  const maxIdxT = tf.argMax(yHat, 1) as tf.Tensor1D;
+  const maxValT = tf.max(yHat, 1, false) as tf.Tensor1D;
+
+  const preds = yHat.arraySync()[0];
+  const maxIdx = maxIdxT.arraySync()[0];
+  const maxVal = maxValT.arraySync()[0];
+
+  debug && console.log("Preds: ", preds);
+  debug && console.log("Argmax: ", maxIdx);
+  debug && console.log("MaxVal: ", maxVal);
+
+  X.dispose();
+  yHat.dispose();
+  maxIdxT.dispose();
+  maxValT.dispose();
+
+  return { preds, maxIdx, maxVal };
 }
 
 export async function predict(X: number[], debug: boolean = false) {

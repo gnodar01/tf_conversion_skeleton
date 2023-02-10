@@ -2,6 +2,7 @@ import Plotly from "plotly.js-dist-min";
 import { predict, predictWith } from "./predict";
 import { genX } from "./genx";
 import "./style.css";
+import { imageFromFile, labelsFromFile } from "./imageHelper";
 
 async function predictAndPlotLR(X: number[], attachPoint: HTMLDivElement) {
   const plotDiv = document.createElement("div");
@@ -20,38 +21,40 @@ async function predictAndPlotLR(X: number[], attachPoint: HTMLDivElement) {
 
 async function predictAndPlotUploaded(
   attachPoint: HTMLElement,
-  dataFile: File,
-  files: { jsonFile: File; weightsFiles: File[] },
+  files: {
+    jsonFile: File;
+    weightsFiles: File[];
+    dataFile: File;
+    labelsFile: File;
+  },
   debug: boolean = false
 ) {
-  const reader = new FileReader();
-  reader.onload = async (readEvent) => {
-    const imageSrc = readEvent.target.result as string;
+  const imageElem = await imageFromFile(files.dataFile, debug);
+  const labelsJson = await labelsFromFile(files.labelsFile, debug);
 
-    const image = new Image(224, 224); // w, h
-    image.src = imageSrc;
+  attachPoint.appendChild(imageElem);
 
-    debug && console.log("Image Element: ", image);
+  predictWith(imageElem, files, debug).then((preds) => {
+    const predictionElem = document.createElement("p");
+    predictionElem.id = "predictions";
 
-    attachPoint.appendChild(image);
+    predictionElem.innerText = `${labelsJson[preds.maxIdx]}: ${(
+      preds.maxVal * 100
+    ).toFixed(2)}%`;
 
-    image.onload = (e) => {
-      predictWith(image, files, debug);
-    };
-  };
-
-  reader.readAsDataURL(dataFile);
+    attachPoint.appendChild(predictionElem);
+  });
 }
 
-function getInputData(
+function getInputLabels(
   attachPoints: { upload: HTMLElement; main: HTMLElement },
-  files: { jsonFile: File; weightsFiles: File[] },
+  files: { jsonFile: File; weightsFiles: File[]; dataFile: File },
   debug: boolean = false
 ) {
   const inputUpload = document.createElement("input");
-  inputUpload.id = "data-upload";
-  inputUpload.accept = "image/jpeg,image/png,image/tiff";
+  inputUpload.id = "label-upload";
   inputUpload.type = "file";
+  inputUpload.accept = "application/json";
 
   inputUpload.onchange = (uploadEvent) => {
     uploadEvent.preventDefault();
@@ -62,11 +65,46 @@ function getInputData(
       console.error("No files", uploadEvent.target);
     }
 
-    const inputFile = inputFiles[0];
+    const labelsFile = inputFiles[0];
 
-    debug && console.log("Input File: ", inputFile);
+    debug && console.log("Labels File: ", labelsFile);
 
-    predictAndPlotUploaded(attachPoints.main, inputFile, files, debug);
+    predictAndPlotUploaded(attachPoints.main, { ...files, labelsFile }, debug);
+  };
+
+  const inputLabel = document.createElement("label");
+  inputLabel.htmlFor = "label-upload";
+  inputLabel.id = "label-upload-label";
+  inputLabel.innerText = "Upload Label Data (json array): ";
+
+  attachPoints.upload.appendChild(inputLabel);
+  attachPoints.upload.appendChild(inputUpload);
+}
+
+function getInputData(
+  attachPoints: { upload: HTMLElement; main: HTMLElement },
+  files: { jsonFile: File; weightsFiles: File[] },
+  debug: boolean = false
+) {
+  const inputUpload = document.createElement("input");
+  inputUpload.id = "data-upload";
+  inputUpload.type = "file";
+  inputUpload.accept = "image/jpeg,image/png,image/tiff";
+
+  inputUpload.onchange = (uploadEvent) => {
+    uploadEvent.preventDefault();
+
+    const inputFiles = (uploadEvent.target as HTMLInputElement).files;
+
+    if (!inputFiles || inputFiles.length === 0) {
+      console.error("No files", uploadEvent.target);
+    }
+
+    const dataFile = inputFiles[0];
+
+    debug && console.log("Image File: ", dataFile);
+
+    getInputLabels(attachPoints, { ...files, dataFile }, debug);
   };
 
   const inputLabel = document.createElement("label");
