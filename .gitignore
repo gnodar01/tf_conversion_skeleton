@@ -25,5 +25,9 @@ dist/*
 yarn.lock
 
 # msic
+.vscode/
 logs/
 *.log
+
+# large stuff, maybe move to LFS
+saved_models/ticknet-model/
