@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "module": "ESNext",
+    "target": "es6",
+    "jsx": "react",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "typeRoots" : ["node_modules/@types", "src/types"],
+    "resolveJsonModule": true,
+    "paths": {
+        "plotly.js-dist": [
+            "../node_modules/plotly.js-dist/plotly.js"
+        ]
+    }
+  }
+}
