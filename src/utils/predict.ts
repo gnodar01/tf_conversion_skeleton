@@ -1,6 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
 import MODEL_JSON from "../../saved_models/gra_web/model.json";
-import MODEL_WEIGHTS from "../../saved_models/gra_web/group1-shard1of1.bin";
+import MODEL_WEIGHTS from "../../saved_models/gra_web/group1-shard1of1.bin?raw";
 
 async function linearRegressor(X: number[], debug: boolean = false) {
   const model_topology_blob = new Blob([JSON.stringify(MODEL_JSON)], {
@@ -25,10 +25,10 @@ async function linearRegressor(X: number[], debug: boolean = false) {
 
   const yHatT = model.execute(xT) as tf.Tensor1D;
 
-  const yHatTIntermediate = model.execute(
-    xT,
-    "PartitionedCall/PartitionedCall/Mul"
-  );
+  const yHatTIntermediate = model.execute(xT, [
+    "StatefulPartitionedCall/ReadVariableOp",
+    "StatefulPartitionedCall/ReadVariableOp_1",
+  ]);
 
   const preds = yHatT.arraySync();
 
