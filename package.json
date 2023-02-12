@@ -23,9 +23,9 @@
     "vite-plugin-solid": "^2.5.0"
   },
   "dependencies": {
-    "solid-js": "^1.6.10",
     "@tensorflow/tfjs": "^4.2.0",
     "lodash": "^4.17.21",
-    "plotly.js-dist-min": "^2.18.1"
+    "plotly.js-dist-min": "^2.18.1",
+    "solid-js": "^1.6.10"
   }
 }
