@@ -14,8 +14,10 @@
     "noEmit": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
+    "baseUrl": "./src",
     "paths": {
-      "plotly.js-dist": ["../node_modules/plotly.js-dist/plotly.js"]
+      "plotly.js-dist": ["../node_modules/plotly.js-dist/plotly.js"],
+      "~/*": ["./*"]
     }
   }
 }

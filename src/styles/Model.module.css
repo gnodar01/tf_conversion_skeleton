@@ -1,0 +1,9 @@
+.predict {
+  background-color: #008cba;
+  border: 1px solid;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 15px;
+}
