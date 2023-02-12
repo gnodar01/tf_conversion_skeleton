@@ -10,8 +10,8 @@ import { predict } from "~/utils/predict";
 const LinearModel: Component = () => {
   const DEBUG = true;
 
-  const [X, setX] = createSignal<number[]>([1, 2, 3]);
-  const [Y, setY] = createSignal<number[]>([4, 5, 6]);
+  const [X, setX] = createSignal<number[]>([]);
+  const [Y, setY] = createSignal<number[]>([]);
 
   const [data, setData] = createSignal([
     { x: X(), y: Y(), mode: "markers", type: "scatter" },
@@ -33,7 +33,7 @@ const LinearModel: Component = () => {
   return (
     <div>
       <div>
-        Run Prediction:
+        Run Linear Regression Prediction:
         <button
           class={modelStyles.predict}
           onclick={() => predictAndPlotLR(DEBUG ? testX : genX(100, 5, 1))}
@@ -41,15 +41,13 @@ const LinearModel: Component = () => {
           Dew It!
         </button>
       </div>
-      {/* <Show when={preds().length > 0}>
-      <div id="linear-model-plot">
-      </div>
-      </Show> */}
-      <PlotComponent
-        data={data as () => Data[]}
-        layout={{ margin: { t: 0 } }}
-        className={"LR-model-plot"}
-      />
+      <Show when={X().length > 0}>
+        <PlotComponent
+          data={data as () => Data[]}
+          layout={{ margin: { t: 0 } }}
+          className={"LR-model-plot"}
+        />
+      </Show>
     </div>
   );
 };
