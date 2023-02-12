@@ -8,7 +8,7 @@ import { testX } from "~/tests/LRData";
 import { predict } from "~/utils/predict";
 
 const LinearModel: Component = () => {
-  const DEBUG = true;
+  const DEBUG = import.meta.env.VITE_DEBUG === "true";
 
   const [X, setX] = createSignal<number[]>([]);
   const [Y, setY] = createSignal<number[]>([]);
@@ -22,7 +22,7 @@ const LinearModel: Component = () => {
   });
 
   const predictAndPlotLR = async (X: number[]) => {
-    const yHat = await predict(X, true);
+    const yHat = await predict(X, DEBUG);
 
     batch(() => {
       setX(X);

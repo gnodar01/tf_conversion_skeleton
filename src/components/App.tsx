@@ -8,7 +8,7 @@ const App: Component = () => {
     <div class={styles.App}>
       <header class={styles.header}>TFJS Demo</header>
       <LinearModel />
-      {/* <Upload /> */}
+      <Upload />
     </div>
   );
 };
