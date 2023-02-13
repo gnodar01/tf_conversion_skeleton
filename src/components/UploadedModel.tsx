@@ -3,7 +3,7 @@ import { imageURLFromFile, labelsFromFile } from "~/utils/imageHelper";
 import { predictWith } from "~/utils/predict";
 import modelStyles from "~/styles/Model.module.css";
 
-const Upload: Component = () => {
+const UploadedModel: Component = () => {
   const DEBUG = import.meta.env.VITE_DEBUG === "true";
 
   const [image, setImage] = createSignal<HTMLImageElement>();
@@ -158,4 +158,4 @@ const Upload: Component = () => {
   );
 };
 
-export default Upload;
+export default UploadedModel;
