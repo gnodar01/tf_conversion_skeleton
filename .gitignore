@@ -29,6 +29,7 @@ yarn.lock
 .vscode/
 logs/
 *.log
+.DS_STORE
 
 # large stuff, maybe move to LFS
 saved_models/ticknet/
