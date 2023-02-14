@@ -18,6 +18,7 @@ conda install jupyter_contrib_nbextensions
 Start a new environment
 
 ```zsh
+# use one of python=3.[8,9,10]
 conda create -n TF python=3.10 pip ipykernel
 conda activate TF
 ```
@@ -26,7 +27,7 @@ Install TensorFlow. Below are [for macOS only](https://developer.apple.com/metal
 
 ```zsh
 # only if using Apple Silicon
-conda install apple tensorflow-deps
+conda install -c apple tensorflow-deps
 
 # on macos, install base TensorFlow
 python -m pip install tensorflow-macos
