@@ -1,41 +1,46 @@
+import * as tf from "@tensorflow/tfjs";
 import { batch, Component, createMemo, createSignal, Show } from "solid-js";
-import { imageURLFromFile, labelsFromFile } from "~/utils/imageHelper";
-import { predictWith } from "~/utils/predict";
+import {
+  imageURLFromFile,
+  imageFromTensor,
+  tensorFromFile,
+  imageFromLabelMask,
+} from "~/utils/imageHelper";
+import { predictWith } from "~/utils/segment";
 import modelStyles from "~/styles/Model.module.css";
+import { set } from "lodash";
 
 const UploadSegmenter: Component = () => {
   const DEBUG = import.meta.env.VITE_DEBUG === "true";
 
   const [image, setImage] = createSignal<HTMLImageElement>();
-  const [category, setCategory] = createSignal<string>("");
-  const [prob, setProb] = createSignal<number>(0);
-
-  const confidence = createMemo(
-    () => `${category()}: ${(prob() * 100).toFixed(2)}%`
-  );
+  const [annotation, setAnnotation] = createSignal<HTMLImageElement>();
+  const [prediction, setPrediction] = createSignal<HTMLImageElement>();
 
   const predictAndPlotUpdated = async (files: {
     modelJsonFile: File;
     modelWeightsFiles: File[];
     dataFile: File;
-    labelsFile: File;
+    labelFile?: File;
   }) => {
-    const imageElement = await imageURLFromFile(
-      files.dataFile,
-      { width: 224, height: 224 },
-      DEBUG
-    );
-    const labelsJSON = await labelsFromFile(files.labelsFile, DEBUG);
+    let annotationElement = undefined;
 
+    const imageTensor = await tensorFromFile(files.dataFile, 3, DEBUG);
+    const imageElement = await imageFromTensor(imageTensor, DEBUG);
+    if (files.labelFile) {
+      const annotationTensor = await tensorFromFile(files.labelFile, 1, DEBUG);
+
+      annotationElement = await imageFromLabelMask(annotationTensor, DEBUG);
+    }
     predictWith(
       imageElement,
       { jsonFile: files.modelJsonFile, weightsFiles: files.modelWeightsFiles },
       DEBUG
-    ).then((preds) => {
+    ).then((pred) => {
       batch(() => {
         setImage(imageElement);
-        setCategory(labelsJSON[preds.maxIdx]);
-        setProb(preds.maxVal);
+        setAnnotation(annotationElement);
+        setPrediction(pred);
       });
     });
   };
@@ -65,7 +70,7 @@ const UploadSegmenter: Component = () => {
 
     const modelFiles = modelInput.files;
     const [dataFile] = dataInput.files;
-    const [labelsFile] = labelInput.files;
+    const [labelFile] = labelInput.files;
 
     let modelWeightsFiles: Array<File> = [];
     let modelJsonFile = modelFiles[0];
@@ -84,14 +89,14 @@ const UploadSegmenter: Component = () => {
         modelWeightsFiles,
         modelJsonFile,
         dataFile,
-        labelsFile
+        labelFile
       );
 
     predictAndPlotUpdated({
       modelJsonFile,
       modelWeightsFiles,
       dataFile,
-      labelsFile,
+      labelFile,
     });
   };
 
@@ -130,7 +135,7 @@ const UploadSegmenter: Component = () => {
             <label for="label-upload-input">Upload Labels: </label>
             <input
               type="file"
-              accept="application/json"
+              accept="image/jpeg,image/png,image/tiff"
               id="label-upload-input"
               class={modelStyles.upload}
             />
@@ -149,11 +154,16 @@ const UploadSegmenter: Component = () => {
       </div>
 
       <div>
-        <Show when={image() !== undefined}>
-          {image()}
-          <p>{confidence()}</p>
-        </Show>
+        <Show when={image() !== undefined}>{image()}</Show>
+        <Show when={annotation() !== undefined}>{annotation()}</Show>
+        <Show when={prediction() !== undefined}>{prediction()}</Show>
       </div>
+      <canvas
+        id="theCanvas"
+        style="visibility:hidden"
+        width="768"
+        height="768"
+      ></canvas>
     </div>
   );
 };

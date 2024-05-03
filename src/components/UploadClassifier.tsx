@@ -1,6 +1,6 @@
 import { batch, Component, createMemo, createSignal, Show } from "solid-js";
 import { imageURLFromFile, labelsFromFile } from "~/utils/imageHelper";
-import { predictWith } from "~/utils/predict";
+import { predictWith } from "~/utils/predictClass";
 import modelStyles from "~/styles/Model.module.css";
 
 const UploadClassifier: Component = () => {

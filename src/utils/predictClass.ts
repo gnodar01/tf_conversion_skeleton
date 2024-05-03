@@ -41,7 +41,7 @@ async function linearRegressor(X: number[], debug: boolean = false) {
     xT.print();
 
     console.log("preds:", preds);
-    yHatTIntermediate instanceof tf.Tensor<tf.Rank>
+    yHatTIntermediate instanceof tf.Tensor
       ? yHatTIntermediate.print()
       : yHatTIntermediate.map((t) => t.print());
     yHatT.print();
