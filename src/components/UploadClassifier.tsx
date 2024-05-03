@@ -3,7 +3,7 @@ import { imageURLFromFile, labelsFromFile } from "~/utils/imageHelper";
 import { predictWith } from "~/utils/predict";
 import modelStyles from "~/styles/Model.module.css";
 
-const UploadedModel: Component = () => {
+const UploadClassifier: Component = () => {
   const DEBUG = import.meta.env.VITE_DEBUG === "true";
 
   const [image, setImage] = createSignal<HTMLImageElement>();
@@ -106,7 +106,7 @@ const UploadedModel: Component = () => {
           onSubmit={handleSubmit}
         >
           <div>
-            <label for="model-upload-input">Upload Model: </label>
+            <label for="model-upload-input">Upload Classifier Model: </label>
             <input
               type="file"
               accept="application/json,application/octet-stream"
@@ -158,4 +158,4 @@ const UploadedModel: Component = () => {
   );
 };
 
-export default UploadedModel;
+export default UploadClassifier;
