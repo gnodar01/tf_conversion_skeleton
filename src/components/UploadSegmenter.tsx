@@ -32,17 +32,21 @@ const UploadSegmenter: Component = () => {
 
       annotationElement = await imageFromLabelMask(annotationTensor, DEBUG);
     }
-    predictWith(
-      imageElement,
-      { jsonFile: files.modelJsonFile, weightsFiles: files.modelWeightsFiles },
-      DEBUG
-    ).then((pred) => {
-      batch(() => {
-        setImage(imageElement);
-        setAnnotation(annotationElement);
-        setPrediction(pred);
-      });
+    batch(() => {
+      setImage(imageElement);
+      setAnnotation(annotationElement);
     });
+    // predictWith(
+    //   imageElement,
+    //   { jsonFile: files.modelJsonFile, weightsFiles: files.modelWeightsFiles },
+    //   DEBUG
+    // ).then((pred) => {
+    //   batch(() => {
+    //     setImage(imageElement);
+    //     setAnnotation(annotationElement);
+    //     setPrediction(pred);
+    //   });
+    // });
   };
 
   const handleSubmit = (e: SubmitEvent) => {
