@@ -229,9 +229,10 @@ export const imageFromTensor = async (
   return img;
 };
 
-export const imageFromLabelMask = async (
+const _imageFromLabelMask = async (
   imageTensor: Tensor3D,
-  debug: boolean = false
+  debug: boolean = false,
+  returnImageJS = false
 ) => {
   const maxVal = imageTensor
     .max(undefined, false)
@@ -254,13 +255,32 @@ export const imageFromLabelMask = async (
     alpha: 0,
     colorModel: "GREY" as ImageJS.ColorModel,
   });
-  const img = new Image(width, height);
-  img.src = image.toDataURL();
+  if (returnImageJS) {
+    debug && console.log("Image (JS) from label mask: ", image);
+    return image;
+  } else {
+    const img = new Image(width, height);
+    img.src = image.toDataURL();
 
-  debug && console.log("Image from label mask: ", img);
-  debug &&
-    console.log("Image from label mask tensor: ", imageFormatted.dataSync());
-  imageFormatted.dispose();
+    debug && console.log("Image from label mask: ", img);
+    imageFormatted.dispose();
 
-  return img;
+    return img;
+  }
+};
+
+export const imageFromLabelMask = async (
+  imageTensor: Tensor3D,
+  debug: boolean = false
+) => {
+  const img = await _imageFromLabelMask(imageTensor, debug, false);
+  return img as HTMLImageElement;
+};
+
+export const imageJSFromLabelMask = async (
+  imageTensor: Tensor3D,
+  debug: boolean = false
+) => {
+  const img = await _imageFromLabelMask(imageTensor, debug, true);
+  return img as ImageJS.Image;
 };
