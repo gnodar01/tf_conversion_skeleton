@@ -17,7 +17,7 @@ const UploadSegmenter: Component = () => {
   const [annotation, setAnnotation] = createSignal<HTMLImageElement>();
   const [prediction, setPrediction] = createSignal<HTMLImageElement>();
 
-  const predictAndPlotUpdated = async (files: {
+  const predictAndShow = async (files: {
     modelJsonFile: File;
     modelWeightsFiles: File[];
     dataFile: File;
@@ -25,28 +25,27 @@ const UploadSegmenter: Component = () => {
   }) => {
     let annotationElement = undefined;
 
+    DEBUG && console.log("Creating Image Tensor");
     const imageTensor = await tensorFromFile(files.dataFile, 3, DEBUG);
     const imageElement = await imageFromTensor(imageTensor, DEBUG);
     if (files.labelFile) {
+      DEBUG && console.log("Creating Annotations Tensor");
       const annotationTensor = await tensorFromFile(files.labelFile, 1, DEBUG);
 
       annotationElement = await imageFromLabelMask(annotationTensor, DEBUG);
+      annotationTensor.dispose();
     }
+    const pred = await predictWith(
+      imageTensor,
+      { jsonFile: files.modelJsonFile, weightsFiles: files.modelWeightsFiles },
+      DEBUG
+    );
     batch(() => {
       setImage(imageElement);
       setAnnotation(annotationElement);
+      setPrediction(pred);
     });
-    // predictWith(
-    //   imageElement,
-    //   { jsonFile: files.modelJsonFile, weightsFiles: files.modelWeightsFiles },
-    //   DEBUG
-    // ).then((pred) => {
-    //   batch(() => {
-    //     setImage(imageElement);
-    //     setAnnotation(annotationElement);
-    //     setPrediction(pred);
-    //   });
-    // });
+    imageTensor.dispose();
   };
 
   const handleSubmit = (e: SubmitEvent) => {
@@ -96,7 +95,7 @@ const UploadSegmenter: Component = () => {
         labelFile
       );
 
-    predictAndPlotUpdated({
+    predictAndShow({
       modelJsonFile,
       modelWeightsFiles,
       dataFile,
@@ -118,7 +117,7 @@ const UploadSegmenter: Component = () => {
             <label for="model-upload-input">Upload Segmenter Model: </label>
             <input
               type="file"
-              accept="application/json,application/octet-stream"
+              accept="*"
               multiple={true}
               id="model-upload-input"
               class={modelStyles.upload}

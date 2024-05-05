@@ -209,12 +209,13 @@ export const imageFromTensor = async (
   imageTensor: Tensor3D,
   debug: boolean = false
 ) => {
+  const scaledImage = tidy(() => imageTensor.mul(255).round());
   const width = imageTensor.shape[1];
   const height = imageTensor.shape[0];
   const image = new ImageJS.Image({
     width,
     height,
-    data: imageTensor.dataSync(),
+    data: scaledImage.dataSync(),
     kind: "RGB" as ImageJS.ImageKind,
     bitDepth: 8,
     components: 3,
@@ -223,6 +224,8 @@ export const imageFromTensor = async (
   });
   const img = new Image(width, height);
   img.src = image.toDataURL();
+  debug && console.log("Image From Tensor", img);
+  scaledImage.dispose();
   return img;
 };
 

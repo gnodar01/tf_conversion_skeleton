@@ -1,79 +1,48 @@
 import * as tf from "@tensorflow/tfjs";
+import { imageFromLabelMask } from "./imageHelper";
 
 async function miscModel(
-  X: tf.Tensor4D,
+  imageTensor: tf.Tensor4D,
   files: { jsonFile: File; weightsFiles: File[] },
   debug: boolean = false
 ) {
   debug && console.log("Files: ", files);
 
-  const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
-  const fakeY = tf.tidy(() => {
-    return X.mul(255)
-      .reshape([768, 768, 3])
-      .round()
-      .asType("int32") as tf.Tensor3D;
-  });
-  const imageData = await tf.browser.toPixels(fakeY, canvas);
-  const img = new Image();
-  img.src = canvas.toDataURL();
+  const model = await tf.loadGraphModel(
+    tf.io.browserFiles([files.jsonFile, ...files.weightsFiles])
+  );
 
-  return img;
+  debug && console.log("Model: ", model);
 
-  //const model = await tf.loadGraphModel(
-  //  tf.io.browserFiles([files.jsonFile, ...files.weightsFiles])
-  //);
+  const X = imageTensor.resizeBilinear([768, 768]) as tf.Tensor4D;
+  const yHat = model.execute(X) as tf.Tensor4D;
+  X.dispose();
 
-  //debug && console.log("Model: ", model);
-
-  //// input [-1, W, H, 3]
-  //// output dense, [-1, 3]
-  //const yHat = model.execute(X) as tf.Tensor2D;
-
-  //const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
-  //const fakeY = tf.tidy(() => {
-  //  return X.mul(255).reshape([768, 768, 3]) as tf.Tensor3D;
-  //});
-  //const imageData = await tf.browser.toPixels(fakeY, canvas);
-  //const img = new Image();
-  //img.src = canvas.toDataURL();
-
-  //return img;
-
-  // const maxIdxT = tf.argMax(yHat, 1) as tf.Tensor1D;
-  // const maxValT = tf.max(yHat, 1, false) as tf.Tensor1D;
-
-  // const preds = yHat.arraySync()[0];
-  // const maxIdx = maxIdxT.arraySync()[0];
-  // const maxVal = maxValT.arraySync()[0];
-
-  // debug && console.log("Preds: ", preds);
-  // debug && console.log("Argmax: ", maxIdx);
-  // debug && console.log("MaxVal: ", maxVal);
-
-  // X.dispose();
-  // yHat.dispose();
-  // maxIdxT.dispose();
-  // maxValT.dispose();
-
-  // return { preds, maxIdx, maxVal };
+  const output = yHat.reshape([
+    yHat.shape[1],
+    yHat.shape[2],
+    yHat.shape[3],
+  ]) as tf.Tensor3D;
+  yHat.dispose();
+  debug && console.log("model output", output);
+  return imageFromLabelMask(output, debug);
 }
 
 export async function predictWith(
-  image: HTMLImageElement,
+  imageTensor: tf.Tensor3D,
   files: { jsonFile: File; weightsFiles: File[] },
   debug: boolean = false
 ) {
-  const imageTensor = tf.tidy(
-    () =>
-      tf.browser
-        .fromPixels(image)
-        .reshape([-1, 768, 768, 3])
-        .asType("float32")
-        .div(255) as tf.Tensor4D
-  );
+  const batchedImageTensor = imageTensor.reshape([
+    -1,
+    imageTensor.shape[0],
+    imageTensor.shape[1],
+    imageTensor.shape[2],
+  ]) as tf.Tensor4D;
 
   debug && console.log("Image Tensor: ", imageTensor);
 
-  return miscModel(imageTensor, files, debug);
+  const labelMask = await miscModel(batchedImageTensor, files, debug);
+  batchedImageTensor.dispose();
+  return labelMask;
 }
