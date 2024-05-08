@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.2.0",
+    "image-js": "^0.35.5",
     "lodash": "^4.17.21",
     "plotly.js-dist-min": "^2.18.1",
     "solid-js": "^1.6.10"

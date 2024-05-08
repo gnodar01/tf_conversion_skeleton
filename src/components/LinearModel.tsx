@@ -5,7 +5,7 @@ import PlotComponent from "~/plotlyComponents/PlotComponent";
 import modelStyles from "~/styles/Model.module.css";
 import { genX } from "~/utils/genX";
 import { testX } from "~/tests/LRData";
-import { predict } from "~/utils/predict";
+import { predict } from "~/utils/predictClass";
 
 const LinearModel: Component = () => {
   const DEBUG = import.meta.env.VITE_DEBUG === "true";
