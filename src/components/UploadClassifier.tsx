@@ -1,5 +1,5 @@
 import { batch, Component, createMemo, createSignal, Show } from "solid-js";
-import { imageURLFromFile, labelsFromFile } from "~/utils/imageHelper";
+import { imageFromFile, labelsFromFile } from "~/utils/imageHelper";
 import { predictWith } from "~/utils/predictClass";
 import modelStyles from "~/styles/Model.module.css";
 
@@ -20,7 +20,7 @@ const UploadClassifier: Component = () => {
     dataFile: File;
     labelsFile: File;
   }) => {
-    const imageElement = await imageURLFromFile(
+    const imageElement = await imageFromFile(
       files.dataFile,
       { width: 224, height: 224 },
       DEBUG

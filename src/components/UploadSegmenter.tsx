@@ -1,7 +1,5 @@
-import * as tf from "@tensorflow/tfjs";
 import { batch, Component, createMemo, createSignal, Show } from "solid-js";
 import {
-  imageURLFromFile,
   imageFromTensor,
   tensorFromFile,
   imageFromLabelMask,

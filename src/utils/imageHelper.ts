@@ -1,8 +1,7 @@
 import * as ImageJS from "image-js";
-import { tidy, Tensor3D, tensor3d, scalar, browser } from "@tensorflow/tfjs";
+import { tidy, Tensor3D, tensor3d, scalar } from "@tensorflow/tfjs";
 
 export enum ImageShapeEnum {
-  DicomImage,
   GreyScale,
   SingleRGBImage,
   HyperStackImage,
@@ -18,7 +17,7 @@ export interface ImageShapeInfo {
   alpha?: boolean;
 }
 
-export const convertToTensor = (
+const convertToTensor = (
   imageStack: ImageJS.Stack,
   numChannels: number
 ): Tensor3D => {
@@ -49,7 +48,9 @@ export const convertToTensor = (
     // normalize in range of 0-1, if not already
     if (!(imageStack[0].data instanceof Float32Array)) {
       const normScalar = scalar(2 ** bitDepth - 1);
-      imageTensor = imageTensor.div(normScalar);
+      const normImageTensor = imageTensor.div(normScalar) as Tensor3D;
+      imageTensor.dispose();
+      imageTensor = normImageTensor;
     }
 
     return imageTensor;
@@ -94,7 +95,7 @@ const getImageInformation = (
   }
 };
 
-const forceStack = async (image: ImageJS.Image | ImageJS.Stack) => {
+const forceStack = (image: ImageJS.Image | ImageJS.Stack) => {
   const imageShapeInfo = getImageInformation(image);
 
   if (imageShapeInfo.shape !== ImageShapeEnum.HyperStackImage) {
@@ -122,16 +123,16 @@ export const tensorFromFile = async (
     ignorePalette: true,
   })) as ImageJS.Image | ImageJS.Stack;
 
-  const imageStack = await forceStack(image);
+  const imageStack = forceStack(image);
 
   const imageTensor = convertToTensor(imageStack, channels);
 
-  debug && console.log("Image Tensor: ", imageTensor);
+  debug && console.log("tensorFromFile - Image Tensor: ", imageTensor);
 
   return imageTensor;
 };
 
-export const imageURLFromFile = (
+export const imageFromFile = (
   imageFile: File,
   debug: boolean = false
 ): Promise<HTMLImageElement> => {
@@ -210,11 +211,11 @@ export const imageFromTensor = async (
   debug: boolean = false
 ) => {
   const scaledImage = tidy(() => imageTensor.mul(255).round());
-  const width = imageTensor.shape[1];
   const height = imageTensor.shape[0];
+  const width = imageTensor.shape[1];
   const image = new ImageJS.Image({
-    width,
     height,
+    width,
     data: scaledImage.dataSync(),
     kind: "RGB" as ImageJS.ImageKind,
     bitDepth: 8,
@@ -234,20 +235,20 @@ const _imageFromLabelMask = async (
   debug: boolean = false,
   returnImageJS = false
 ) => {
-  const maxVal = imageTensor
-    .max(undefined, false)
-    .dataSync() as unknown as number;
-  const multiplicand = Math.floor((1 / maxVal) * 255);
+  const maxVal = tidy(
+    () => imageTensor.max(undefined, false).dataSync() as unknown as number
+  );
+  const multiplier = Math.floor((1 / maxVal) * 255);
   const imageFormatted = tidy(() =>
-    imageTensor.mul(multiplicand).asType("int32")
+    imageTensor.mul(multiplier).asType("int32")
   ) as Tensor3D;
 
-  const width = imageFormatted.shape[1];
   const height = imageFormatted.shape[0];
+  const width = imageFormatted.shape[1];
 
   const image = new ImageJS.Image({
-    width,
     height,
+    width,
     data: imageFormatted.dataSync(),
     kind: "GREY" as ImageJS.ImageKind,
     bitDepth: 8,
@@ -256,13 +257,14 @@ const _imageFromLabelMask = async (
     colorModel: "GREY" as ImageJS.ColorModel,
   });
   if (returnImageJS) {
-    debug && console.log("Image (JS) from label mask: ", image);
+    debug &&
+      console.log("imageFromLabelMask - Image (JS) from label mask: ", image);
     return image;
   } else {
     const img = new Image(width, height);
     img.src = image.toDataURL();
 
-    debug && console.log("Image from label mask: ", img);
+    debug && console.log("imageFromLabelMask - Image from label mask: ", img);
     imageFormatted.dispose();
 
     return img;
@@ -283,4 +285,65 @@ export const imageJSFromLabelMask = async (
 ) => {
   const img = await _imageFromLabelMask(imageTensor, debug, true);
   return img as ImageJS.Image;
+};
+
+export const labelConnectedComponents = (
+  image: Uint8Array,
+  width: number,
+  height: number
+): Uint8Array => {
+  const output = new Uint8Array(image.length);
+  const stack: number[] = [];
+  let currentLabel = 1;
+
+  // Helper function to check if a pixel is within bounds and is foreground
+  function isForeground(x: number, y: number): boolean {
+    return (
+      x >= 0 &&
+      x < width &&
+      y >= 0 &&
+      y < height &&
+      image[x * height + y] === 255
+    );
+  }
+
+  // Helper function to process a connected component using stack
+  function processComponent(x: number, y: number) {
+    stack.push(x * height + y); // Push the starting pixel
+    output[x * height + y] = currentLabel; // Label the starting pixel
+
+    while (stack.length > 0) {
+      const pixel = stack.pop()!;
+      const px = Math.floor(pixel / height);
+      const py = pixel % height;
+
+      // Check neighbors
+      const neighbors = [
+        [px - 1, py],
+        [px + 1, py],
+        [px, py - 1],
+        [px, py + 1],
+      ];
+
+      for (const [nx, ny] of neighbors) {
+        if (isForeground(nx, ny) && output[nx * height + ny] === 0) {
+          stack.push(nx * height + ny);
+          output[nx * height + ny] = currentLabel;
+        }
+      }
+    }
+  }
+
+  // Loop through each pixel
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      const index = x * height + y;
+      if (image[index] === 255 && output[index] === 0) {
+        processComponent(x, y); // Start processing a new component
+        currentLabel++; // Move to the next label for the next component
+      }
+    }
+  }
+
+  return output;
 };
